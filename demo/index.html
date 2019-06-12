@@ -14,29 +14,32 @@
         body {
             background-color: #5cc2f1;
             font-size: 14px;
-           
+            margin: 0px;
         }
 
         #container {
-            width: 60vw;
+            width: 70vw;
             margin: 0px auto;
             background-color: #fff;
-            
         }
 
         #container ul {
             list-style: none;
+            padding: 10px;
         }
 
         #container ul li {
-            padding: 10px;
+            border-bottom: 10px solid #ccc;
             overflow: hidden;
+        }
+
+        #container ul li:last-child {
+            border: 0px;
         }
 
         #container ul li h3 {
             padding-bottom: 5px;
             border-bottom: 1px solid #ccc;
-            
         }
 
         #container ul h3 a {
@@ -61,6 +64,27 @@
         #container ul img {
             width: 100%;
         }
+
+        .viewpop {
+            display:flex;
+            align-items:center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,.8);
+            z-index: 1000;
+        }
+        .viewpop img {
+            display: block;
+            max-width: 100%;
+            width: auto;
+            height: auto;
+        }
+        .dn {
+            display: none;
+        }
     </style>
 
 </head>
@@ -77,6 +101,57 @@
             </li>
         </ul>
     </div>
+    <div class="viewpop dn">
+        <img src="https://zhaoshaobang.github.io/demo/cardChange/img/code.png"/>
+    </div> 
+    <script>
+        var container = document.getElementById('container');
+        var viewpop = document.getElementsByClassName('viewpop')[0];
+        var popImg = viewpop.getElementsByTagName('img')[0];
+        container.addEventListener('click', function (e) {
+            var target = e.target;
+            if(target.tagName.toLowerCase() == 'img') {
+                var url = target.getAttribute('src');
+                popImg.setAttribute('src', url);
+                removeClass(viewpop, 'dn');
+            }
+        })
+
+        viewpop.addEventListener('click', function (e) {
+            if(!hasClass(viewpop, 'dn')) {
+                addClass(viewpop, 'dn');
+            }
+        })
+
+        function addClass(el, className) {
+            var classAry = el.getAttribute('class').split(/\s+/g);
+            if(classAry.indexOf(className) < 0) {
+                classAry.push(className);
+            }
+            var newClass = classAry.join(' ');
+            el.setAttribute('class', newClass);
+        }
+        
+        function removeClass(el, className) {
+            var classAry = el.getAttribute('class').split(/\s+/g);
+            var index = classAry.indexOf(className);
+            if(index >= 0) {
+                classAry.splice(index, 1);
+            }
+            var newClass = classAry.join(' ');
+            el.setAttribute('class', newClass);
+        }
+
+        function hasClass(el, className) {
+            var classAry = el.getAttribute('class').split(/\s+/g);
+            var index = classAry.indexOf(className);
+            if(index >= 0) {
+                return true;
+            }
+            return false;
+        }
+
+    </script>
 </body>
 
 </html>
