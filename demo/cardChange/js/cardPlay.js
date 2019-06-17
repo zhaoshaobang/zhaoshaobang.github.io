@@ -20,6 +20,7 @@ class CardPlay {
             this.options.visible = 1;
         }
         this.current = 0;
+        this.timer = null;
         this.init();
         this.bindDomEvent();
     }
@@ -63,7 +64,11 @@ class CardPlay {
                 })
             }
         }
-        $(this.items[this.current]).addClass('stack__item--current')
+        $(this.items[this.current]).addClass('stack__item--current');
+        if(this.options.loop) {
+            this.loop();
+        }
+        this.paginationInit();
     }
 
     bindDomEvent() {
@@ -71,25 +76,68 @@ class CardPlay {
         var startX, startY, moveEndX, moveEndY;
         $(this.el).on('touchstart', function (e) {
             //e.preventDefault();
+            clearInterval(self.timer);
             startX = e.touches[0].pageX;
             startY = e.touches[0].pageY;
         })
 
         $(this.el).on('touchmove', function (e) {
-            //e.preventDefault();
             moveEndX = e.touches[0].pageX;
             moveEndY = e.touches[0].pageY;
             var disX = moveEndX - startX;
             var disY = moveEndY - startY;
             if(disX > 0 && Math.abs(disX) > Math.abs(disY)) {
+                e.preventDefault();
                 self.accept();
             } else if (disX < 0 && Math.abs(disX) > Math.abs(disY)) {
+                e.preventDefault();
                 self.reject();
             }
         })
+
+        $(this.el).on('touchend', function () {
+            if(self.options.loop) {
+                self.loop();
+            }
+        })
+       
     }
 
-    next(action, callback) {
+    loop() {
+        var self = this;
+        this.timer = setInterval(function () {
+            self.accept();
+        }, 2000);
+    }
+
+    // 分页器初始化
+    paginationInit() {
+        var self = this;
+        if(this.options.pagination && this.options.pagination.el) {
+            this.dots = $(this.options.pagination.el).children();
+            this.dots.forEach(function (item, index) {
+                $(item).attr('index', index);
+            })
+            this.dots.eq(0).addClass(this.options.pagination.selectedClass);
+
+            // 分页器点击事件
+            this.dots.on('click', function (e) {
+                var index = parseInt($(e.target).attr('index'));
+                if(self.isClickMoving) {
+                    return;
+                }
+                self.moveCount = self.current <= index ? index - self.current : index - self.current + self.itemsTotal;
+                if(self.moveCount == 0) {
+                    return;
+                }
+                self.clickMoveTime = self.moveCount == 1 ? 0.5 : 0.1;
+                self.isClickMoving = true;
+                self.next('accept', null, 'click');
+            })
+        }
+    }
+
+    next(action, callback, moveType) {
         if (this.isAnimating || (!this.options.infinite && this.hasEnded)) return;
         this.isAnimating = true;
 
@@ -103,6 +151,12 @@ class CardPlay {
         } else {
             $(currentItem).addClass(this.options.rejectClass);
         }
+
+        if(moveType == 'click') {
+            $(currentItem).css('animation-duration', this.clickMoveTime + 's');
+            this.moveCount--;
+        }
+        
 
         var self = this;
         this.onEndAnimation(currentItem, function () {
@@ -131,6 +185,23 @@ class CardPlay {
                 // callback
                 self.options.onEndStack(self);
             }
+
+            if(!self.isClickMoving && self.dots && self.dots.length > 0) {
+                self.dots.removeClass(self.options.pagination.selectedClass);
+                self.dots.eq(self.current).addClass(self.options.pagination.selectedClass);
+            }
+
+            if(moveType == 'click') {
+                $(currentItem).css('animation-duration', '');
+                if(self.moveCount > 0) {
+                    self.next('accept', null, 'click');
+                } else {
+                    self.isClickMoving = false;
+                    self.dots.removeClass(self.options.pagination.selectedClass);
+                    self.dots.eq(self.current).addClass(self.options.pagination.selectedClass);
+                }
+            }
+
         });
 
         // set style for the other items
@@ -156,7 +227,7 @@ class CardPlay {
                     $(item).animate({
                         translateZ: parseInt(-1 * 50 * i) + 'px'
                     }, {
-                        duration: 500,
+                        duration: self.clickMoveTime * 100,
                         easing: 'swing'
                     })
                 };

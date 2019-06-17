@@ -53,11 +53,10 @@
             width: 100%;
         }
 
-        button {
-            position: absolute;
-            width: 100px;
-            height: 50px;
-        }
+
+       button {
+           width: 50px;
+       }
 
 
         .rightMove {
@@ -105,6 +104,10 @@
                 transform: rotate3d(0, 0, 1, -20deg);
             }
         }
+
+        .selected {
+            background-color: red;
+        }
     </style>
 </head>
 
@@ -118,7 +121,14 @@
             <li><img src="img/5.png" alt=""></li>
             <li><img src="img/6.png" alt=""></li>
         </ul>
-
+        <div id="dots" style="position: absolute; bottom: 120px">
+            <button>点击</button>
+            <button>点击</button>
+            <button>点击</button>
+            <button>点击</button>
+            <button>点击</button>
+            <button>点击</button>
+        </div>
     </div>
     <script src="//static.qiyi.com/js/html5/js/lib/lib.2.0.5.min.js"></script>
     <script src="./js/cardPlay.js"></script>
@@ -126,8 +136,16 @@
         var cards = document.getElementById('cards');
         var card = new CardPlay(cards, {
             acceptClass: 'rightMove', // 向右滑动时，card滑动动画样式类名
-            rejectClass: 'leftMove' // 向左滑动时，card滑动动画样式类名
+            rejectClass: 'leftMove', // 向左滑动时，card滑动动画样式类名
+            pagination: {
+                el: '#dots',
+                selectedClass: 'selected'
+            },
+            loop: false
         });
+
+        
+        
     </script>
 </body>
 
