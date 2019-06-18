@@ -51,7 +51,7 @@ class CardPlay {
             var item = this.items[i];
             if (i < this.options.visible) {
                 $(item).css({
-                    opacity: 1,
+                    opacity: 1 - 0.3 * i,
                     pointerEvents: 'auto',
                     zIndex: i === 0 ? parseInt(this.options.visible + 1) : parseInt(this.options.visible - i),
                     transform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)',
@@ -220,14 +220,15 @@ class CardPlay {
                 animateStackItems = function (item, i) {
                     $(item).css({
                         pointerEvents: 'auto',
-                        opacity: 1,
+                        
                         zIndex: parseInt(self.options.visible - i)
                     })
                     
                     $(item).animate({
+                        opacity: 1 - 0.3 * i,
                         translateZ: parseInt(-1 * 50 * i) + 'px'
                     }, {
-                        duration: self.clickMoveTime * 100,
+                        duration: self.isClickMoving ? self.clickMoveTime * 100 : 500,
                         easing: 'swing'
                     })
                 };
