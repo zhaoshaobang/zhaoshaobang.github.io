@@ -51,7 +51,7 @@ class CardPlay {
             var item = this.items[i];
             if (i < this.options.visible) {
                 $(item).css({
-                    opacity: 1 - 0.3 * i,
+                    opacity: (1 - 0.3 * i) > 0.1 ? (1 - 0.3 * i) : 0.3,
                     pointerEvents: 'auto',
                     zIndex: i === 0 ? parseInt(this.options.visible + 1) : parseInt(this.options.visible - i),
                     transform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)',
@@ -225,7 +225,7 @@ class CardPlay {
                     })
                     
                     $(item).animate({
-                        opacity: 1 - 0.3 * i,
+                        opacity: (1 - 0.3 * i) > 0.1 ? (1 - 0.3 * i) : 0.3, // 后面透明度渐变
                         translateZ: parseInt(-1 * 50 * i) + 'px'
                     }, {
                         duration: self.isClickMoving ? self.clickMoveTime * 100 : 500,
