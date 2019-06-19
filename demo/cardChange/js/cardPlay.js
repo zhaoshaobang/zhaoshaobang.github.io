@@ -76,26 +76,35 @@ class CardPlay {
         var startX, startY, moveEndX, moveEndY;
         $(this.el).on('touchstart', function (e) {
             //e.preventDefault();
+            if(self.isClickMoving) {
+                return;
+            }
             clearInterval(self.timer);
             startX = e.touches[0].pageX;
             startY = e.touches[0].pageY;
         })
 
         $(this.el).on('touchmove', function (e) {
+            if(self.isClickMoving) {
+                return;
+            }
             moveEndX = e.touches[0].pageX;
             moveEndY = e.touches[0].pageY;
             var disX = moveEndX - startX;
             var disY = moveEndY - startY;
-            if(disX > 0 && Math.abs(disX) > Math.abs(disY)) {
-                e.preventDefault();
+            if(disX > 5 && Math.abs(disX) > Math.abs(disY)) {
+                //e.preventDefault();
                 self.accept();
-            } else if (disX < 0 && Math.abs(disX) > Math.abs(disY)) {
-                e.preventDefault();
+            } else if (disX < -5 && Math.abs(disX) > Math.abs(disY)) {
+                //e.preventDefault();
                 self.reject();
             }
         })
 
         $(this.el).on('touchend', function () {
+            if(self.isClickMoving) {
+                return;
+            }
             if(self.options.loop) {
                 self.loop();
             }
@@ -122,17 +131,20 @@ class CardPlay {
 
             // 分页器点击事件
             this.dots.on('click', function (e) {
-                var index = parseInt($(e.target).attr('index'));
-                if(self.isClickMoving) {
+                if(self.isClickMoving || self.isAnimating) {
                     return;
                 }
+                var index = parseInt($(e.target).attr('index'));
                 self.moveCount = self.current <= index ? index - self.current : index - self.current + self.itemsTotal;
                 if(self.moveCount == 0) {
                     return;
                 }
                 self.clickMoveTime = self.moveCount == 1 ? 0.5 : 0.1;
                 self.isClickMoving = true;
+                clearInterval(self.timer);
                 self.next('accept', null, 'click');
+                self.dots.removeClass(self.options.pagination.selectedClass);
+                self.dots.eq(index).addClass(self.options.pagination.selectedClass);
             })
         }
     }
@@ -186,10 +198,10 @@ class CardPlay {
                 self.options.onEndStack(self);
             }
 
-            if(!self.isClickMoving && self.dots && self.dots.length > 0) {
+            /* if(!self.isClickMoving && self.dots && self.dots.length > 0) {
                 self.dots.removeClass(self.options.pagination.selectedClass);
                 self.dots.eq(self.current).addClass(self.options.pagination.selectedClass);
-            }
+            } */
 
             if(moveType == 'click') {
                 $(currentItem).css('animation-duration', '');
@@ -197,8 +209,11 @@ class CardPlay {
                     self.next('accept', null, 'click');
                 } else {
                     self.isClickMoving = false;
-                    self.dots.removeClass(self.options.pagination.selectedClass);
-                    self.dots.eq(self.current).addClass(self.options.pagination.selectedClass);
+                    if(self.options.loop) {
+                        self.loop()
+                    }
+                    /* self.dots.removeClass(self.options.pagination.selectedClass);
+                    self.dots.eq(self.current).addClass(self.options.pagination.selectedClass); */
                 }
             }
 
@@ -231,6 +246,11 @@ class CardPlay {
                         duration: self.isClickMoving ? self.clickMoveTime * 100 : 500,
                         easing: 'swing'
                     })
+
+                    if(!self.isClickMoving && self.dots && self.dots.length > 0) {
+                        self.dots.removeClass(self.options.pagination.selectedClass);
+                        self.dots.eq(self.current).addClass(self.options.pagination.selectedClass);
+                    }
                 };
 
             setTimeout(function (item, i) {
