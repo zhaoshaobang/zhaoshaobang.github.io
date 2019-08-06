@@ -23,6 +23,9 @@ class CardPlay {
         this.timer = null;
         this.init();
         this.bindDomEvent();
+        if(this.options.initCard >= 0) {
+            console.log('initCard: ' + this.options.initCard);
+        }
     }
 
     accept(callback) {
@@ -47,9 +50,63 @@ class CardPlay {
         })
 
         // the items
+        let posAry = [];
+        if(this.options.initCard >= 0) {
+            this.current = this.options.initCard;
+            for (var i = 0; i < this.itemsTotal; ++i) {
+                if (i >= this.options.visible) break;
+                if (!this.options.infinite) {
+                    if (this.current + i >= this.itemsTotal - 1) break;
+                    var pos = this.current + i + 1;
+                } else {
+                    var pos = this.current + i < this.itemsTotal ? this.current + i : i - (this.itemsTotal - this.current);
+                }
+                var item = this.items[pos];
+                $(item).css({
+                    opacity: (1 - 0.3 * i) > 0.1 ? (1 - 0.3 * i) : 0.3,
+                    pointerEvents: 'auto',
+                    zIndex: i === 0 ? parseInt(this.options.visible + 1) : parseInt(this.options.visible - i),
+                    transform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)',
+                    WebkitTransform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)'
+                })
+                posAry.push(pos);
+            }
+            console.log(posAry);
+        }
         for (var i = 0; i < this.itemsTotal; ++i) {
             var item = this.items[i];
-            if (i < this.options.visible) {
+            if(this.options.initCard >= 0) {
+                if (posAry.indexOf(i) < 0) {
+                    $(item).css({
+                        transform: 'translate3d(0 , 0, -' + parseInt(this.options.visible * 50) + 'px)',
+                        WebkitTransform: 'translate3d(0,0,-' + parseInt(this.options.visible * 50) + 'px)'
+                    })
+                } 
+                if(i == posAry[posAry.length - 1]) {
+                    break;
+                }
+            } else {
+                if (i < this.options.visible) {
+                    $(item).css({
+                        opacity: (1 - 0.3 * i) > 0.1 ? (1 - 0.3 * i) : 0.3,
+                        pointerEvents: 'auto',
+                        zIndex: i === 0 ? parseInt(this.options.visible + 1) : parseInt(this.options.visible - i),
+                        transform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)',
+                        WebkitTransform: 'translate3d(0px, 0px, ' + parseInt(-1 * 50 * i) + 'px)'
+                    })
+                } else {
+                    $(item).css({
+                        transform: 'translate3d(0 , 0, -' + parseInt(this.options.visible * 50) + 'px)',
+                        WebkitTransform: 'translate3d(0,0,-' + parseInt(this.options.visible * 50) + 'px)'
+                    })
+                }
+            }
+            
+        }
+
+        /* for (var i = 0; i < this.itemsTotal; ++i) {
+            var item = this.items[i];
+            if (posAry.indexOf(i) >= 0) {
                 $(item).css({
                     opacity: (1 - 0.3 * i) > 0.1 ? (1 - 0.3 * i) : 0.3,
                     pointerEvents: 'auto',
@@ -63,7 +120,7 @@ class CardPlay {
                     WebkitTransform: 'translate3d(0,0,-' + parseInt(this.options.visible * 50) + 'px)'
                 })
             }
-        }
+        } */
         $(this.items[this.current]).addClass('stack__item--current');
         if(this.options.loop) {
             this.loop();
@@ -92,13 +149,13 @@ class CardPlay {
             moveEndY = e.touches[0].pageY;
             var disX = moveEndX - startX;
             var disY = moveEndY - startY;
-            if(disX > 5 && Math.abs(disX) > Math.abs(disY)) {
+            if(disX > 10 && Math.abs(disX) > Math.abs(disY)) {
                 //e.preventDefault();
                 self.accept();
-            } else if (disX < -5 && Math.abs(disX) > Math.abs(disY)) {
+            } else if (disX < -10 && Math.abs(disX) > Math.abs(disY)) {
                 //e.preventDefault();
                 self.reject();
-            }
+            } 
         })
 
         $(this.el).on('touchend', function () {
@@ -116,7 +173,7 @@ class CardPlay {
         var self = this;
         this.timer = setInterval(function () {
             self.accept();
-        }, 2000);
+        }, 3000);
     }
 
     // 分页器初始化
@@ -124,10 +181,12 @@ class CardPlay {
         var self = this;
         if(this.options.pagination && this.options.pagination.el) {
             this.dots = $(this.options.pagination.el).children();
-            this.dots.forEach(function (item, index) {
+            this.dots.each(function (index,item) {
                 $(item).attr('index', index);
             })
-            this.dots.eq(0).addClass(this.options.pagination.selectedClass);
+            let index = this.options.initCard >= 0 ? this.options.initCard : 0;
+            this.dots.removeClass(this.options.pagination.selectedClass);
+            this.dots.eq(index).addClass(this.options.pagination.selectedClass);
 
             // 分页器点击事件
             this.dots.on('click', function (e) {
@@ -135,18 +194,23 @@ class CardPlay {
                     return;
                 }
                 var index = parseInt($(e.target).attr('index'));
-                self.moveCount = self.current <= index ? index - self.current : index - self.current + self.itemsTotal;
-                if(self.moveCount == 0) {
-                    return;
-                }
-                self.clickMoveTime = self.moveCount == 1 ? 0.5 : 0.1;
-                self.isClickMoving = true;
-                clearInterval(self.timer);
-                self.next('accept', null, 'click');
-                self.dots.removeClass(self.options.pagination.selectedClass);
-                self.dots.eq(index).addClass(self.options.pagination.selectedClass);
+                self.moveIndex(index);
             })
         }
+    }
+
+    moveIndex(index) {
+        let self = this;
+        self.moveCount = self.current <= index ? index - self.current : index - self.current + self.itemsTotal;
+        if(self.moveCount == 0) {
+            return;
+        }
+        self.clickMoveTime = self.moveCount == 1 ? 0.5 : 0.1;
+        self.isClickMoving = true;
+        clearInterval(self.timer);
+        self.next('accept', null, 'click');
+        self.dots.removeClass(self.options.pagination.selectedClass);
+        self.dots.eq(index).addClass(self.options.pagination.selectedClass);
     }
 
     next(action, callback, moveType) {
@@ -318,3 +382,4 @@ class CardPlay {
         el.addEventListener(animationEnd, onEndCallbackFn);
     }
 }
+
